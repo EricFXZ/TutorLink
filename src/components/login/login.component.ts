@@ -1,0 +1,21 @@
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  templateUrl: './login.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, FormsModule],
+})
+export class LoginComponent {
+  private router = inject(Router);
+
+  login() {
+    // In a real app, you'd have authentication logic here.
+    // For this mockup, we'll just navigate.
+    this.router.navigate(['/student']);
+  }
+}

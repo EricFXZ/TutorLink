@@ -1,0 +1,44 @@
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+  <div class="flex items-center justify-between mb-4">
+    <button (click)="previousWeek()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </button>
+    <h3 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-white text-center">
+      {{ weekDays()[0].date | date:'MMM d' }} - {{ weekDays()[6].date | date:'MMM d, y' }}
+    </h3>
+    <button (click)="nextWeek()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+    </button>
+  </div>
+
+  <div class="grid grid-cols-7 text-center text-xs sm:text-sm">
+    @for (day of weekDays(); track day.date) {
+      <div class="px-1">
+        <div class="text-gray-600 dark:text-gray-300 font-semibold">{{ day.name }}</div>
+        <div class="mt-1 font-bold text-base sm:text-lg" [class.text-blue-600]="day.isToday" [class.dark:text-blue-400]="day.isToday">
+          {{ day.date | date:'d' }}
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (!isTutorView()) {
+    <div class="mt-4 flex items-center justify-center space-x-4 text-xs">
+      <div class="flex items-center">
+        <span class="w-3 h-3 rounded-full bg-green-200 dark:bg-green-800 mr-2 border border-green-300 dark:border-green-700"></span>
+        <span>Available</span>
+      </div>
+      <div class="flex items-center">
+        <span class="w-3 h-3 rounded-full bg-red-200 dark:bg-red-800 mr-2 border border-red-300 dark:border-red-700"></span>
+        <span>Booked</span>
+      </div>
+    </div>
+    <div class="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
+      Click an available slot to request a session.
+    </div>
+  } @else {
+     <div class="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
+      Your weekly schedule overview.
+    </div>
+  }
+</div>

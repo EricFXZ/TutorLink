@@ -1,0 +1,130 @@
+<div class="space-y-8">
+  <!-- Role Switcher for Mockup -->
+  <div class="flex justify-center p-1 bg-gray-200 dark:bg-gray-700 rounded-lg shadow-inner max-w-sm mx-auto">
+    <a [routerLink]="['/student']"
+        [class]="currentUserRole() === 'student' ? 'bg-blue-600 text-white shadow' : 'bg-transparent text-gray-600 dark:text-gray-300'"
+        class="w-1/2 px-4 py-2 rounded-md font-semibold transition-colors duration-300 ease-in-out text-center">
+      Student View
+    </a>
+    <a [routerLink]="['/tutor']"
+        [class]="currentUserRole() === 'tutor' ? 'bg-blue-600 text-white shadow' : 'bg-transparent text-gray-600 dark:text-gray-300'"
+        class="w-1/2 px-4 py-2 rounded-md font-semibold transition-colors duration-300 ease-in-out text-center">
+      Tutor View
+    </a>
+  </div>
+
+  <!-- Student View -->
+  @if (currentUserRole() === 'student') {
+    <div class="animate-fade-in">
+      <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">My Dashboard</h2>
+        <button (click)="openRequestModal()" class="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+          Request Tutoring
+        </button>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-8">
+          <app-session-list title="Upcoming Sessions" [sessions]="studentUpcomingSessions()" [userRole]="'student'"></app-session-list>
+           <hr>
+          <app-session-list title="Past Sessions" [sessions]="studentPastSessions()" [userRole]="'student'"></app-session-list>
+        </div>
+        <div class="lg:col-span-1">
+          <app-calendar></app-calendar>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Tutor View -->
+  @if (currentUserRole() === 'tutor') {
+    <div class="animate-fade-in">
+      <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Tutor Dashboard</h2>
+        <div class="flex items-center space-x-3">
+           <button (click)="openSubjectManagerModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+            Manage Subjects
+          </button>
+          <button (click)="openAvailabilityModal()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+            Manage Availability
+          </button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-8">
+          <app-session-list title="Pending Requests" [sessions]="tutorPendingRequests()" [userRole]="'tutor'"></app-session-list>
+          <hr>
+          <app-session-list title="Confirmed Sessions" [sessions]="tutorUpcomingSessions()" [userRole]="'tutor'"></app-session-list>
+        </div>
+        <div class="lg:col-span-1">
+          <app-calendar [isTutorView]="true"></app-calendar>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Request Tutoring Modal -->
+@if (showRequestModal()) {
+  <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in-fast p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-6 sm:p-8 w-full max-w-lg">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold">New Tutoring Request</h3>
+        <button (click)="closeRequestModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <form (ngSubmit)="submitRequest()" class="space-y-4">
+        <div>
+          <label for="subject" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Subject</label>
+          <select id="subject" name="subject" [(ngModel)]="newRequest.subjectId" (change)="onSubjectChange()" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+            <option value="" disabled>Select a subject</option>
+            @for (subject of subjects(); track subject.id) {
+              <option [value]="subject.id">{{ subject.name }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label for="topic" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Topic</label>
+          <input type="text" id="topic" name="topic" [(ngModel)]="newRequest.topic" required placeholder="e.g., 'Help with assignment 3'" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <label for="tutor" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Preferred Tutor</label>
+          <select id="tutor" name="tutor" [(ngModel)]="newRequest.tutorId" required [disabled]="!newRequest.subjectId" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:cursor-not-allowed">
+            <option [ngValue]="null" disabled>
+              @if (!newRequest.subjectId) {
+                Select a subject first
+              } @else {
+                Select a tutor
+              }
+            </option>
+             @if (newRequest.subjectId && filteredTutors().length === 0) {
+              <option [ngValue]="null" disabled>No tutors for this subject</option>
+            }
+            @for (tutor of filteredTutors(); track tutor.id) {
+              <option [value]="tutor.id">{{ tutor.name }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Preferred Date & Time</label>
+          <input type="datetime-local" id="date" name="date" [(ngModel)]="newRequest.date" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div class="pt-4 flex justify-end space-x-3">
+          <button type="button" (click)="closeRequestModal()" class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
+          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Submit Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Manage Availability Modal -->
+@if (showAvailabilityModal()) {
+  <app-availability-manager (close)="closeAvailabilityModal()"></app-availability-manager>
+}
+
+<!-- Manage Subjects Modal -->
+@if (showSubjectManagerModal()) {
+  <app-subject-manager [tutorId]="currentTutorId" (close)="closeSubjectManagerModal()"></app-subject-manager>
+}

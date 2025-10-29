@@ -1,0 +1,51 @@
+<div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in-fast p-4">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh]">
+    <!-- Modal Header -->
+    <div class="flex-shrink-0 flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+      <h3 class="text-2xl font-bold">Manage Your Availability</h3>
+      <button (click)="closeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="flex-grow p-6 overflow-y-auto">
+      <div class="text-sm text-gray-600 dark:text-gray-400 mb-4">Click on a time slot to mark it as available or unavailable for tutoring sessions.</div>
+      <div class="overflow-x-auto">
+        <div class="grid grid-flow-col auto-cols-fr gap-1 min-w-[640px]">
+          <!-- Header for days -->
+          <div class="sticky top-0 bg-white dark:bg-gray-800 z-10 text-center font-semibold py-2">Time</div>
+          @for (day of days; track day) {
+            <div class="sticky top-0 bg-white dark:bg-gray-800 z-10 text-center font-semibold py-2">{{ day }}</div>
+          }
+        </div>
+
+        <div class="grid grid-flow-col auto-cols-fr gap-1 -mt-1 min-w-[640px]">
+          <!-- Time column -->
+          <div class="grid grid-rows-auto">
+            @for (time of timeSlots; track time) {
+              <div class="text-xs text-center text-gray-500 dark:text-gray-400 py-2 h-10 flex items-center justify-center">{{ time }}</div>
+            }
+          </div>
+          <!-- Availability columns -->
+          @for (day of days; track day) {
+            <div class="grid grid-rows-auto">
+              @for (time of timeSlots; track time) {
+                <button (click)="toggleAvailability(day, time)"
+                        [class]="isAvailable(day, time) ? 'bg-green-400 hover:bg-green-500 dark:bg-green-600 dark:hover:bg-green-500' : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'"
+                        class="h-10 rounded transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+    
+    <!-- Modal Footer -->
+    <div class="flex-shrink-0 flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">
+      <button type="button" (click)="closeModal()" class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
+      <button type="button" (click)="saveChanges()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Save Changes</button>
+    </div>
+  </div>
+</div>

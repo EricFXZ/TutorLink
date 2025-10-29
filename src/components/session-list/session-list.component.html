@@ -1,0 +1,47 @@
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+  <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">{{ title() }}</h3>
+  @if (sessions().length > 0) {
+    <ul class="space-y-4">
+      @for (session of sessions(); track session.id) {
+        <li class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-shadow hover:shadow-md">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="flex-grow">
+              <p class="font-bold text-lg text-blue-600 dark:text-blue-400">{{ session.subject.name }}</p>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Topic: {{ session.topic }}</p>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                @if (isTutor()) {
+                  <span>With Student: {{ session.student.name }}</span>
+                } @else {
+                  <span>With Tutor: {{ session.tutor.name }}</span>
+                }
+              </p>
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mt-1 flex items-center">
+                <svg class="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                {{ session.date | date:'fullDate' }} at {{ session.date | date:'shortTime' }}
+              </p>
+            </div>
+            <div class="w-full sm:w-auto flex flex-row sm:flex-col items-end space-x-2 sm:space-x-0 sm:space-y-2 justify-end">
+              <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full" [class]="getStatusColor(session.status)">
+                {{ session.status | titlecase }}
+              </span>
+              @if (isTutor() && session.status === 'pending') {
+                <div class="flex space-x-2">
+                  <button (click)="approveRequest(session.id)" class="px-3 py-1 text-xs font-medium text-center text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400">Approve</button>
+                  <button (click)="rejectRequest(session.id)" class="px-3 py-1 text-xs font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">Reject</button>
+                </div>
+              }
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
+  } @else {
+    <div class="text-center py-8 px-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No sessions</h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">There are no sessions to display in this category.</p>
+    </div>
+  }
+</div>
