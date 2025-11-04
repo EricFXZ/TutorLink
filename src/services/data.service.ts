@@ -32,7 +32,8 @@ export class DataService {
       date: new Date(new Date().setDate(new Date().getDate() + 2)),
       durationMinutes: 60,
       status: 'confirmed',
-      materials: [{ name: 'Recursion Slides.pdf', url: '#' }]
+      materials: [{ name: 'Recursion Slides.pdf', url: '#' }],
+      sessionLink: 'https://meet.google.com/xyz-abc-def'
     },
     {
       id: 2,
@@ -54,7 +55,43 @@ export class DataService {
       date: new Date(new Date().setDate(new Date().getDate() - 5)),
       durationMinutes: 60,
       status: 'completed',
-      materials: [{ name: 'Practice Problems.pdf', url: '#' }, { name: 'Session Recording.mp4', url: '#' }]
+      materials: [{ name: 'Practice Problems.pdf', url: '#' }, { name: 'Session Recording.mp4', url: '#' }],
+      comments: 'Alice did a great job grasping the core concepts of derivatives. We should focus on chain rule applications next time.'
+    },
+    {
+      id: 4,
+      student: this.students[1], // Bob Williams
+      tutor: this.tutorsSignal()[0], // Dr. Evelyn Reed
+      subject: this.subjects[2], // Modern Physics
+      topic: 'Introduction to Quantum Mechanics',
+      date: new Date(new Date().setDate(new Date().getDate() + 5)),
+      durationMinutes: 75,
+      status: 'confirmed',
+      materials: [{ name: 'Intro_QM_Notes.pdf', url: '#' }],
+      sessionLink: undefined // No link yet, for testing "add link"
+    },
+    {
+      id: 5,
+      student: this.students[0], // Alice Johnson
+      tutor: this.tutorsSignal()[1], // Prof. Marcus Chen
+      subject: this.subjects[3], // General Chemistry
+      topic: 'Stoichiometry and Balancing Equations',
+      date: new Date(new Date().setDate(new Date().getDate() - 2)),
+      durationMinutes: 60,
+      status: 'completed',
+      materials: [{ name: 'Worksheet.pdf', url: '#' }],
+      comments: undefined // No comments yet, for testing "add comments"
+    },
+    {
+      id: 6,
+      student: this.students[1], // Bob Williams
+      tutor: this.tutorsSignal()[0], // Dr. Evelyn Reed
+      subject: this.subjects[0], // Intro to Programming
+      topic: 'Data Structures: Arrays vs Linked Lists',
+      date: new Date(new Date().setDate(new Date().getDate() + 7)),
+      durationMinutes: 60,
+      status: 'pending',
+      materials: [] // No materials yet, for testing "add materials"
     }
   ]);
 
@@ -73,6 +110,12 @@ export class DataService {
   updateSessionStatus(sessionId: number, status: SessionStatus) {
     this.sessionsSignal.update(sessions => 
         sessions.map(s => s.id === sessionId ? { ...s, status } : s)
+    );
+  }
+  
+  updateSessionDetails(sessionId: number, details: Partial<Pick<TutoringSession, 'sessionLink' | 'comments' | 'materials'>>) {
+    this.sessionsSignal.update(sessions =>
+      sessions.map(s => (s.id === sessionId ? { ...s, ...details } : s))
     );
   }
 

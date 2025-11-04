@@ -1,14 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { CommonModule, DatePipe, TitleCasePipe } from '@angular/common';
 import { TutoringSession, UserRole, SessionStatus } from '../../models/session.model';
 import { DataService } from '../../services/data.service';
+import { SessionDetailsComponent } from '../session-details/session-details.component';
 
 @Component({
   selector: 'app-session-list',
   standalone: true,
   templateUrl: './session-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DatePipe, TitleCasePipe]
+  imports: [CommonModule, DatePipe, TitleCasePipe, SessionDetailsComponent]
 })
 export class SessionListComponent {
   private dataService = inject(DataService);
@@ -18,6 +19,31 @@ export class SessionListComponent {
   userRole = input.required<UserRole>();
   
   isTutor = computed(() => this.userRole() === 'tutor');
+
+  activeMenuId = signal<number | null>(null);
+
+  showConfirmation = signal(false);
+  sessionToActOnId = signal<number | null>(null);
+  confirmationDetails = signal({ title: '', message: '' });
+
+  selectedSession = signal<TutoringSession | null>(null);
+
+  toggleMenu(sessionId: number, event: MouseEvent) {
+    event.stopPropagation();
+    this.activeMenuId.update(id => (id === sessionId ? null : sessionId));
+  }
+  
+  closeMenu() {
+    this.activeMenuId.set(null);
+  }
+
+  viewSessionDetails(session: TutoringSession) {
+    this.selectedSession.set(session);
+  }
+
+  closeDetailsModal() {
+    this.selectedSession.set(null);
+  }
 
   getStatusColor(status: SessionStatus): string {
     switch (status) {
@@ -31,9 +57,40 @@ export class SessionListComponent {
 
   approveRequest(sessionId: number) {
     this.dataService.updateSessionStatus(sessionId, 'confirmed');
+    this.closeMenu();
   }
 
-  rejectRequest(sessionId: number) {
-    this.dataService.updateSessionStatus(sessionId, 'cancelled');
+  initiateCancellation(sessionId: number, action: 'reject' | 'cancel') {
+    this.sessionToActOnId.set(sessionId);
+    if (action === 'reject') {
+      this.confirmationDetails.set({
+        title: 'Reject Session Request',
+        message: 'Are you sure you want to reject this tutoring session request? This action cannot be undone.'
+      });
+    } else {
+      this.confirmationDetails.set({
+        title: 'Cancel Session',
+        message: 'Are you sure you want to cancel this session? This action cannot be undone.'
+      });
+    }
+    this.showConfirmation.set(true);
+    this.closeMenu();
+  }
+
+  onConfirmCancellation() {
+    const id = this.sessionToActOnId();
+    if (id !== null) {
+      this.dataService.updateSessionStatus(id, 'cancelled');
+    }
+    this.resetCancellationState();
+  }
+
+  onCancelCancellation() {
+    this.resetCancellationState();
+  }
+
+  private resetCancellationState() {
+    this.showConfirmation.set(false);
+    this.sessionToActOnId.set(null);
   }
 }

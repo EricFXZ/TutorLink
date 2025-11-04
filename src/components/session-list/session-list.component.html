@@ -1,9 +1,9 @@
-<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6" (click)="closeMenu()">
   <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">{{ title() }}</h3>
   @if (sessions().length > 0) {
     <ul class="space-y-4">
       @for (session of sessions(); track session.id) {
-        <li class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-shadow hover:shadow-md">
+        <li class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-shadow hover:shadow-md cursor-pointer" (click)="viewSessionDetails(session)">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div class="flex-grow">
               <p class="font-bold text-lg text-blue-600 dark:text-blue-400">{{ session.subject.name }}</p>
@@ -20,14 +20,55 @@
                 {{ session.date | date:'fullDate' }} at {{ session.date | date:'shortTime' }}
               </p>
             </div>
-            <div class="w-full sm:w-auto flex flex-row sm:flex-col items-end space-x-2 sm:space-x-0 sm:space-y-2 justify-end">
+            <div class="w-full sm:w-auto flex items-center justify-end space-x-4" (click)="$event.stopPropagation()">
               <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full" [class]="getStatusColor(session.status)">
                 {{ session.status | titlecase }}
               </span>
-              @if (isTutor() && session.status === 'pending') {
-                <div class="flex space-x-2">
-                  <button (click)="approveRequest(session.id)" class="px-3 py-1 text-xs font-medium text-center text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400">Approve</button>
-                  <button (click)="rejectRequest(session.id)" class="px-3 py-1 text-xs font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">Reject</button>
+
+              @if (session.status !== 'completed' && session.status !== 'cancelled') {
+                <div class="relative">
+                  <!-- Menu Toggle Button -->
+                  <button (click)="toggleMenu(session.id, $event)" type="button" class="p-2 text-gray-500 dark:text-gray-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                    </svg>
+                  </button>
+    
+                  <!-- Pop-up Menu -->
+                  @if (activeMenuId() === session.id) {
+                    <div (click)="$event.stopPropagation()" class="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-20 animate-fade-in-fast">
+                      <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                        <!-- Tutor Actions -->
+                        @if (isTutor()) {
+                          @if (session.status === 'pending') {
+                            <a (click)="approveRequest(session.id)" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" role="menuitem">
+                              <svg class="w-4 h-4 mr-3 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                              Approve
+                            </a>
+                            <a (click)="initiateCancellation(session.id, 'reject')" class="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" role="menuitem">
+                              <svg class="w-4 h-4 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                              Reject
+                            </a>
+                          }
+                          @if (session.status === 'confirmed') {
+                            <a (click)="initiateCancellation(session.id, 'cancel')" class="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" role="menuitem">
+                              <svg class="w-4 h-4 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                              Cancel Session
+                            </a>
+                          }
+                        }
+                        <!-- Student Actions -->
+                        @if (!isTutor()) {
+                          @if (session.status === 'pending' || session.status === 'confirmed') {
+                            <a (click)="initiateCancellation(session.id, 'cancel')" class="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" role="menuitem">
+                              <svg class="w-4 h-4 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                              Cancel Session
+                            </a>
+                          }
+                        }
+                      </div>
+                    </div>
+                  }
                 </div>
               }
             </div>
@@ -45,3 +86,41 @@
     </div>
   }
 </div>
+
+<!-- Confirmation Modal -->
+@if (showConfirmation()) {
+  <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in-fast p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-6 sm:p-8 w-full max-w-md">
+      <div class="text-center">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900">
+          <svg class="h-6 w-6 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h3 class="mt-5 text-lg font-medium leading-6 text-gray-900 dark:text-white">{{ confirmationDetails().title }}</h3>
+        <div class="mt-2">
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            {{ confirmationDetails().message }}
+          </p>
+        </div>
+      </div>
+      <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+        <button type="button" (click)="onConfirmCancellation()" class="inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 sm:col-start-2 sm:text-sm">
+          Confirm
+        </button>
+        <button type="button" (click)="onCancelCancellation()" class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 sm:mt-0 sm:col-start-1 sm:text-sm">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Session Details Modal -->
+@if (selectedSession()) {
+  <app-session-details 
+    [session]="selectedSession()!" 
+    [userRole]="userRole()" 
+    (close)="closeDetailsModal()">
+  </app-session-details>
+}

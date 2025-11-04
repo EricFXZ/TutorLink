@@ -7,40 +7,96 @@
         </svg>
         <h1 class="text-3xl font-bold text-gray-800 dark:text-white">TutorLink CEUTEC</h1>
       </div>
-      <p class="text-gray-600 dark:text-gray-400">Sign in to continue</p>
+      @if (isLoginView()) {
+        <p class="text-gray-600 dark:text-gray-400">Sign in to continue</p>
+      } @else {
+        <p class="text-gray-600 dark:text-gray-400">Create your account</p>
+      }
     </div>
-    <form class="space-y-6" (ngSubmit)="login()">
-      <div>
-        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
-        <input id="email" name="email" type="email" autocomplete="email" required
-               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700"
-               placeholder="you@example.com" value="student@ceutec.edu">
-      </div>
 
-      <div>
-        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required
-               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700"
-               placeholder="••••••••" value="password">
-      </div>
-
-      <div class="flex items-center justify-between">
-        <div class="flex items-center">
-          <input id="remember-me" name="remember-me" type="checkbox"
-                 class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-          <label for="remember-me" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">Remember me</label>
+    @if (isLoginView()) {
+      <form class="space-y-6" (ngSubmit)="login()">
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+          <input id="email" name="email" type="email" autocomplete="email" required
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700"
+                 placeholder="you@example.com" value="student@ceutec.edu">
         </div>
-        <div class="text-sm">
+
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700"
+                 placeholder="••••••••" value="password">
+        </div>
+
+        <div class="text-right text-sm">
           <a href="#" class="font-medium text-blue-600 hover:text-blue-500">Forgot your password?</a>
         </div>
-      </div>
 
-      <div>
-        <button type="submit"
-                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105">
-          Sign In
-        </button>
-      </div>
-    </form>
+        <div>
+          <button type="submit"
+                  class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105">
+            Sign In
+          </button>
+        </div>
+      </form>
+      <p class="text-sm text-center text-gray-600 dark:text-gray-400">
+        Don't have an account? 
+        <a (click)="toggleView()" class="font-medium text-blue-600 hover:text-blue-500 cursor-pointer">
+          Sign up
+        </a>
+      </p>
+    } @else {
+      <form class="space-y-4" (ngSubmit)="register()">
+         <div>
+          <label for="register-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+          <input id="register-name" name="register-name" type="text" autocomplete="name" required [(ngModel)]="registration.name"
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700"
+                 placeholder="John Doe">
+        </div>
+        
+        <div>
+          <label for="register-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+          <input id="register-username" name="register-username" type="text" autocomplete="username" required [(ngModel)]="registration.username"
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700"
+                 placeholder="johndoe">
+        </div>
+
+        <div>
+          <label for="register-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+          <input id="register-email" name="register-email" type="email" autocomplete="email" required [(ngModel)]="registration.email"
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700"
+                 placeholder="you@example.com">
+        </div>
+
+        <div>
+          <label for="register-account" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Account Number</label>
+          <input id="register-account" name="register-account" type="text" required [(ngModel)]="registration.accountNumber"
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700"
+                 placeholder="e.g., 12345678">
+        </div>
+
+        <div>
+          <label for="register-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+          <input id="register-password" name="register-password" type="password" autocomplete="new-password" required [(ngModel)]="registration.password"
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700"
+                 placeholder="••••••••">
+        </div>
+
+        <div>
+          <button type="submit"
+                  class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105">
+            Create Account
+          </button>
+        </div>
+      </form>
+      <p class="text-sm text-center text-gray-600 dark:text-gray-400">
+        Already have an account? 
+        <a (click)="toggleView()" class="font-medium text-blue-600 hover:text-blue-500 cursor-pointer">
+          Sign in
+        </a>
+      </p>
+    }
   </div>
 </div>

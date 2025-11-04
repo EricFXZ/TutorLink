@@ -24,4 +24,6 @@ export interface TutoringSession {
   durationMinutes: number;
   status: SessionStatus;
   materials: { name: string; url: string }[];
+  comments?: string;
+  sessionLink?: string;
 }
