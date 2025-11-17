@@ -6,13 +6,17 @@
         <li class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-shadow hover:shadow-md cursor-pointer" (click)="viewSessionDetails(session)">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div class="flex-grow">
-              <p class="font-bold text-lg text-blue-600 dark:text-blue-400">{{ session.subject.name }}</p>
+              <p class="font-bold text-lg text-blue-600 dark:text-blue-400">{{ session.subjectName }}</p>
               <p class="text-sm text-gray-600 dark:text-gray-400">Topic: {{ session.topic }}</p>
               <p class="text-sm text-gray-600 dark:text-gray-400">
-                @if (isTutor()) {
-                  <span>With Student: {{ session.student.name }}</span>
+                @if (session.isGlobal) {
+                  <span class="font-semibold text-indigo-600 dark:text-indigo-400">Global Session ({{session.attendeeIds?.length ?? 0}} / {{session.maxAttendees}} joined)</span>
                 } @else {
-                  <span>With Tutor: {{ session.tutor.name }}</span>
+                  @if (isTutor()) {
+                    <span>With Student: {{ session.studentName }}</span>
+                  } @else {
+                    <span>With Tutor: {{ session.tutorName }}</span>
+                  }
                 }
               </p>
               <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mt-1 flex items-center">
@@ -21,11 +25,24 @@
               </p>
             </div>
             <div class="w-full sm:w-auto flex items-center justify-end space-x-4" (click)="$event.stopPropagation()">
+              <!-- Join Button for Students on Global Sessions -->
+              @if (userRole() === 'student' && session.isGlobal && !hasJoined(session)) {
+                  @if ((session.attendeeIds?.length ?? 0) < (session.maxAttendees ?? Infinity)) {
+                      <button (click)="joinSession(session.id)" class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded-lg text-sm transition-transform transform hover:scale-105">
+                        Join
+                      </button>
+                  } @else {
+                      <button disabled class="bg-gray-400 text-white font-bold py-1 px-3 rounded-lg text-sm cursor-not-allowed">
+                        Full
+                      </button>
+                  }
+              }
+
               <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full" [class]="getStatusColor(session.status)">
                 {{ session.status | titlecase }}
               </span>
 
-              @if (session.status !== 'completed' && session.status !== 'cancelled') {
+              @if (session.status !== 'completed' && session.status !== 'cancelled' && !session.isGlobal) {
                 <div class="relative">
                   <!-- Menu Toggle Button -->
                   <button (click)="toggleMenu(session.id, $event)" type="button" class="p-2 text-gray-500 dark:text-gray-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">

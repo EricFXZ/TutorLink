@@ -17,18 +17,19 @@ export class SessionListComponent {
   title = input.required<string>();
   sessions = input.required<TutoringSession[]>();
   userRole = input.required<UserRole>();
+  currentUserId = input<string | null>(null);
   
   isTutor = computed(() => this.userRole() === 'tutor');
 
-  activeMenuId = signal<number | null>(null);
+  activeMenuId = signal<string | null>(null);
 
   showConfirmation = signal(false);
-  sessionToActOnId = signal<number | null>(null);
+  sessionToActOnId = signal<string | null>(null);
   confirmationDetails = signal({ title: '', message: '' });
 
   selectedSession = signal<TutoringSession | null>(null);
 
-  toggleMenu(sessionId: number, event: MouseEvent) {
+  toggleMenu(sessionId: string, event: MouseEvent) {
     event.stopPropagation();
     this.activeMenuId.update(id => (id === sessionId ? null : sessionId));
   }
@@ -55,12 +56,12 @@ export class SessionListComponent {
     }
   }
 
-  approveRequest(sessionId: number) {
+  approveRequest(sessionId: string) {
     this.dataService.updateSessionStatus(sessionId, 'confirmed');
     this.closeMenu();
   }
 
-  initiateCancellation(sessionId: number, action: 'reject' | 'cancel') {
+  initiateCancellation(sessionId: string, action: 'reject' | 'cancel') {
     this.sessionToActOnId.set(sessionId);
     if (action === 'reject') {
       this.confirmationDetails.set({
@@ -92,5 +93,19 @@ export class SessionListComponent {
   private resetCancellationState() {
     this.showConfirmation.set(false);
     this.sessionToActOnId.set(null);
+  }
+
+  joinSession(sessionId: string) {
+    const studentId = this.currentUserId();
+    if (this.userRole() === 'student' && studentId) {
+      this.dataService.addStudentToGlobalSession(sessionId, studentId);
+    }
+  }
+
+  hasJoined(session: TutoringSession): boolean {
+    if (!session.isGlobal || this.userRole() !== 'student') return false;
+    const studentId = this.currentUserId();
+    if (!studentId) return false;
+    return (session.attendeeIds ?? []).includes(studentId);
   }
 }

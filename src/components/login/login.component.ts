@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { DataService } from '../../services/data.service';
 
 @Component({
   selector: 'app-login',
@@ -12,8 +14,18 @@ import { Router } from '@angular/router';
 })
 export class LoginComponent {
   private router = inject(Router);
+  private authService = inject(AuthService);
+  private dataService = inject(DataService);
 
   isLoginView = signal(true);
+  errorMessage = signal<string | null>(null);
+  isSeeding = signal(false);
+
+  // Login form model
+  loginCredentials = {
+    email: '',
+    password: ''
+  };
 
   // Registration form model
   registration = {
@@ -24,20 +36,70 @@ export class LoginComponent {
     accountNumber: ''
   };
 
-  login() {
-    // In a real app, you'd have authentication logic here.
-    // For this mockup, we'll just navigate.
-    this.router.navigate(['/student']);
+  async login() {
+    this.errorMessage.set(null);
+    try {
+      await this.authService.login(this.loginCredentials.email, this.loginCredentials.password);
+      // Navigation is handled by the auth service on success
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = (error as { code: string }).code;
+        if (errorCode === 'auth/invalid-credential') {
+          this.errorMessage.set('Invalid email or password. Please try again or sign up.');
+        } else {
+          this.errorMessage.set('An unexpected error occurred during login.');
+        }
+      } else {
+        this.errorMessage.set('An unexpected error occurred.');
+      }
+      console.error('Login error:', error);
+    }
   }
   
-  register() {
-    console.log('Registering user:', this.registration);
-    // After registration, switch back to login view
-    this.isLoginView.set(true);
-    // In a real app, you might show a success message.
+  async register() {
+    this.errorMessage.set(null);
+    if (!this.registration.email || !this.registration.password || !this.registration.name || !this.registration.username || !this.registration.accountNumber) {
+      this.errorMessage.set('All fields are required for registration.');
+      return;
+    }
+    try {
+      await this.authService.register(this.registration);
+      alert('Registration successful! Please sign in with your new account.');
+      this.isLoginView.set(true);
+      this.registration = { username: '', email: '', password: '', name: '', accountNumber: '' };
+    } catch (error: any) {
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = (error as { code: string }).code;
+        if (errorCode === 'auth/email-already-in-use') {
+            this.errorMessage.set('This email is already registered. Please sign in.');
+        } else if (errorCode === 'auth/weak-password') {
+            this.errorMessage.set('Password must be at least 6 characters long.');
+        } else {
+            this.errorMessage.set('An unexpected error occurred during registration.');
+        }
+    } else {
+        this.errorMessage.set('An unexpected error occurred.');
+    }
+      console.error('Registration error:', error);
+    }
   }
 
   toggleView() {
     this.isLoginView.update(value => !value);
+    this.errorMessage.set(null);
+  }
+
+  async seedDatabase() {
+    this.isSeeding.set(true);
+    this.errorMessage.set(null);
+    try {
+        await this.dataService.seedDatabase();
+        alert('Database seeded successfully with sample subjects and tutors!');
+    } catch (e) {
+        console.error('Seeding failed', e);
+        this.errorMessage.set('Failed to seed database. Check console for details.');
+    } finally {
+        this.isSeeding.set(false);
+    }
   }
 }

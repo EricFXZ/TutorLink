@@ -5,64 +5,131 @@ import { Router, RouterLink } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { SessionListComponent } from '../session-list/session-list.component';
 import { CalendarComponent } from '../calendar/calendar.component';
-import { TutoringSession, UserRole } from '../../models/session.model';
-import { AvailabilityManagerComponent } from '../availability-manager/availability-manager.component';
+import { TutoringSession, User, UserRole } from '../../models/session.model';
 import { SubjectManagerComponent } from '../subject-manager/subject-manager.component';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   templateUrl: './dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, SessionListComponent, CalendarComponent, AvailabilityManagerComponent, SubjectManagerComponent, RouterLink]
+  imports: [CommonModule, FormsModule, SessionListComponent, CalendarComponent, SubjectManagerComponent, RouterLink]
 })
 export class DashboardComponent {
   private dataService = inject(DataService);
   private router = inject(Router);
+  private authService = inject(AuthService);
 
-  currentUserRole = computed<UserRole>(() => this.router.url.includes('/student') ? 'student' : 'tutor');
+  currentUserRole = computed<UserRole>(() => this.authService.currentUserProfile()?.role ?? 'student');
+  currentUserProfile = this.authService.currentUserProfile;
+  
   showRequestModal = signal(false);
-  showAvailabilityModal = signal(false);
   showSubjectManagerModal = signal(false);
+  showGlobalSessionModal = signal(false);
 
   allSessions = this.dataService.getSessions();
   subjects = this.dataService.getSubjects();
   tutors = this.dataService.getTutors();
 
-  currentStudentId = 201; // Alice Johnson
-  currentTutorId = 101; // Dr. Evelyn Reed
+  studentUpcomingSessions = computed(() => {
+    const user = this.currentUserProfile();
+    if (!user) return [];
+    return this.allSessions().filter(s => {
+      const isJoinedGlobal = s.isGlobal && (s.attendeeIds ?? []).includes(user.id);
+      const isPersonal = !s.isGlobal && s.studentId === user.id && s.status === 'confirmed';
+      return (isJoinedGlobal || isPersonal) && s.date > new Date();
+    });
+  });
 
-  studentUpcomingSessions = computed(() => this.allSessions().filter(s =>
-    s.student.id === this.currentStudentId && s.status === 'confirmed' && s.date > new Date()
-  ));
-  studentPastSessions = computed(() => this.allSessions().filter(s =>
-    s.student.id === this.currentStudentId && (s.status === 'completed' || s.status === 'cancelled')
+  studentPastSessions = computed(() => {
+    const user = this.currentUserProfile();
+    if (!user) return [];
+    return this.allSessions().filter(s => {
+      const isJoinedGlobal = s.isGlobal && (s.attendeeIds ?? []).includes(user.id);
+      const isPersonal = !s.isGlobal && s.studentId === user.id;
+      return (isJoinedGlobal || isPersonal) && (s.status === 'completed' || s.status === 'cancelled' || s.date <= new Date());
+    });
+  });
+
+  availableGlobalSessions = computed(() => {
+    const user = this.currentUserProfile();
+    if (!user) return [];
+    return this.allSessions().filter(s =>
+      s.isGlobal &&
+      s.date > new Date() &&
+      s.status === 'confirmed' &&
+      ((s.attendeeIds?.length ?? 0) < (s.maxAttendees ?? Infinity)) &&
+      !(s.attendeeIds ?? []).includes(user.id)
+    );
+  });
+
+  tutorPendingRequests = computed(() => {
+    const user = this.currentUserProfile();
+    if (!user) return [];
+    return this.allSessions().filter(s =>
+      !s.isGlobal && s.tutorId === user.id && s.status === 'pending'
+    );
+  });
+
+  tutorUpcomingSessions = computed(() => {
+    const user = this.currentUserProfile();
+    if (!user) return [];
+    return this.allSessions().filter(s =>
+      s.tutorId === user.id && s.status === 'confirmed' && s.date > new Date()
+    );
+  });
+
+  tutorPastSessions = computed(() => {
+    const user = this.currentUserProfile();
+    if (!user) return [];
+    return this.allSessions().filter(s => 
+      s.tutorId === user.id && (s.status === 'completed' || s.status === 'cancelled' || s.date <= new Date())
+    );
+  });
+
+  careerHeadUpcomingSessions = computed(() => this.allSessions().filter(s =>
+    s.isGlobal && s.date > new Date()
   ));
 
-  tutorPendingRequests = computed(() => this.allSessions().filter(s =>
-    s.tutor.id === this.currentTutorId && s.status === 'pending'
-  ));
-  tutorUpcomingSessions = computed(() => this.allSessions().filter(s =>
-    s.tutor.id === this.currentTutorId && s.status === 'confirmed' && s.date > new Date()
+  careerHeadPastSessions = computed(() => this.allSessions().filter(s =>
+    s.isGlobal && s.date <= new Date()
   ));
 
-  newRequest = {
-    subjectId: '',
-    topic: '',
-    tutorId: null as number | null,
-    date: ''
-  };
+  newRequestSubjectId = signal('');
+  newRequestTopic = signal('');
+  newRequestTutorId = signal<string | null>(null);
+  newRequestDate = signal('');
 
-  filteredTutors = computed(() => {
-    const selectedSubjectId = this.newRequest.subjectId;
+  newGlobalSubjectId = signal('');
+  newGlobalTopic = signal('');
+  newGlobalTutorId = signal<string | null>(null);
+  newGlobalDate = signal('');
+  newGlobalDuration = signal(90);
+  newGlobalMaxAttendees = signal(20);
+
+  filteredTutorsForStudent = computed(() => {
+    const selectedSubjectId = this.newRequestSubjectId();
     if (!selectedSubjectId) {
       return [];
     }
     return this.tutors().filter(tutor => tutor.subjectIds?.includes(selectedSubjectId));
   });
 
+  filteredTutorsForGlobal = computed(() => {
+    const selectedSubjectId = this.newGlobalSubjectId();
+    if (!selectedSubjectId) {
+      return this.tutors();
+    }
+    return this.tutors().filter(tutor => tutor.subjectIds?.includes(selectedSubjectId));
+  });
+
   onSubjectChange() {
-    this.newRequest.tutorId = null;
+    this.newRequestTutorId.set(null);
+  }
+
+  onGlobalSubjectChange() {
+    this.newGlobalTutorId.set(null);
   }
 
   openRequestModal() {
@@ -71,14 +138,10 @@ export class DashboardComponent {
 
   closeRequestModal() {
     this.showRequestModal.set(false);
-  }
-
-  openAvailabilityModal() {
-    this.showAvailabilityModal.set(true);
-  }
-
-  closeAvailabilityModal() {
-    this.showAvailabilityModal.set(false);
+    this.newRequestSubjectId.set('');
+    this.newRequestTopic.set('');
+    this.newRequestTutorId.set(null);
+    this.newRequestDate.set('');
   }
 
   openSubjectManagerModal() {
@@ -89,21 +152,72 @@ export class DashboardComponent {
     this.showSubjectManagerModal.set(false);
   }
 
-  submitRequest() {
-    if (!this.newRequest.subjectId || !this.newRequest.topic || !this.newRequest.date || !this.newRequest.tutorId) return;
+  openGlobalSessionModal() {
+    this.showGlobalSessionModal.set(true);
+  }
 
-    const newSession: TutoringSession = {
-      id: Date.now(),
-      student: { id: this.currentStudentId, name: 'Alice Johnson', role: 'student' },
-      tutor: this.tutors().find(t => t.id === Number(this.newRequest.tutorId))!,
-      subject: this.subjects().find(s => s.id === this.newRequest.subjectId)!,
-      topic: this.newRequest.topic,
-      date: new Date(this.newRequest.date),
+  closeGlobalSessionModal() {
+    this.showGlobalSessionModal.set(false);
+    this.newGlobalSubjectId.set('');
+    this.newGlobalTopic.set('');
+    this.newGlobalTutorId.set(null);
+    this.newGlobalDate.set('');
+    this.newGlobalDuration.set(90);
+    this.newGlobalMaxAttendees.set(20);
+  }
+
+  async submitRequest() {
+    const subjectId = this.newRequestSubjectId();
+    const topic = this.newRequestTopic();
+    const date = this.newRequestDate();
+    const tutorId = this.newRequestTutorId();
+    const student = this.currentUserProfile();
+
+    if (!subjectId || !topic || !date || !tutorId || !student) return;
+
+    const newSessionData: Partial<TutoringSession> = {
+      studentId: student.id,
+      tutorId: tutorId,
+      subjectId: subjectId,
+      topic: topic,
+      date: new Date(date),
       durationMinutes: 60,
-      status: 'pending',
       materials: []
     };
-    this.allSessions.update(sessions => [...sessions, newSession]);
-    this.closeRequestModal();
+    try {
+      await this.dataService.createTutoringRequest(newSessionData);
+      this.closeRequestModal();
+    } catch (error) {
+      console.error("Failed to create request:", error);
+      // Optionally show an error to the user
+    }
+  }
+  
+  async submitGlobalSession() {
+    const subjectId = this.newGlobalSubjectId();
+    const topic = this.newGlobalTopic();
+    const date = this.newGlobalDate();
+    const tutorId = this.newGlobalTutorId();
+    const careerHead = this.currentUserProfile();
+
+    if (!subjectId || !topic || !date || !tutorId || !careerHead) return;
+
+    const newSessionData: Partial<TutoringSession> = {
+      tutorId: tutorId,
+      subjectId: subjectId,
+      topic: topic,
+      date: new Date(date),
+      durationMinutes: Number(this.newGlobalDuration()),
+      materials: [],
+      isGlobal: true,
+      maxAttendees: Number(this.newGlobalMaxAttendees()),
+      createdBy: careerHead.id
+    };
+    try {
+      await this.dataService.createGlobalSession(newSessionData);
+      this.closeGlobalSessionModal();
+    } catch (error) {
+      console.error("Failed to create global session:", error);
+    }
   }
 }

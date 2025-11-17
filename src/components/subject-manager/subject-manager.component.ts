@@ -13,7 +13,7 @@ export class SubjectManagerComponent {
   close = output<void>();
   dataService = inject(DataService);
 
-  tutorId = input.required<number>();
+  tutorId = input.required<string>();
 
   allSubjects = this.dataService.getSubjects();
   tutor = computed(() => this.dataService.getTutors()().find(t => t.id === this.tutorId()));
