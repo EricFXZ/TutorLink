@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { CommonModule, DatePipe, TitleCasePipe } from '@angular/common';
 import { TutoringSession, UserRole, SessionStatus } from '../../models/session.model';
 import { DataService } from '../../services/data.service';
@@ -27,7 +27,13 @@ export class SessionListComponent {
   sessionToActOnId = signal<string | null>(null);
   confirmationDetails = signal({ title: '', message: '' });
 
-  selectedSession = signal<TutoringSession | null>(null);
+  selectedSessionId = signal<string | null>(null);
+  selectedSession = computed(() => {
+    const id = this.selectedSessionId();
+    if (!id) return null;
+    // The sessions() input will be updated reactively from the service
+    return this.sessions().find(s => s.id === id) ?? null;
+  });
 
   toggleMenu(sessionId: string, event: MouseEvent) {
     event.stopPropagation();
@@ -39,11 +45,11 @@ export class SessionListComponent {
   }
 
   viewSessionDetails(session: TutoringSession) {
-    this.selectedSession.set(session);
+    this.selectedSessionId.set(session.id);
   }
 
   closeDetailsModal() {
-    this.selectedSession.set(null);
+    this.selectedSessionId.set(null);
   }
 
   getStatusColor(status: SessionStatus): string {
@@ -58,6 +64,11 @@ export class SessionListComponent {
 
   approveRequest(sessionId: string) {
     this.dataService.updateSessionStatus(sessionId, 'confirmed');
+    this.closeMenu();
+  }
+
+  markAsCompleted(sessionId: string) {
+    this.dataService.updateSessionStatus(sessionId, 'completed');
     this.closeMenu();
   }
 

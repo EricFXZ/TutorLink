@@ -32,6 +32,14 @@ export class DashboardComponent {
   subjects = this.dataService.getSubjects();
   tutors = this.dataService.getTutors();
 
+  studentPendingSessions = computed(() => {
+    const user = this.currentUserProfile();
+    if (!user) return [];
+    return this.allSessions().filter(s =>
+      !s.isGlobal && s.studentId === user.id && s.status === 'pending'
+    );
+  });
+
   studentUpcomingSessions = computed(() => {
     const user = this.currentUserProfile();
     if (!user) return [];
@@ -89,11 +97,11 @@ export class DashboardComponent {
   });
 
   careerHeadUpcomingSessions = computed(() => this.allSessions().filter(s =>
-    s.isGlobal && s.date > new Date()
+    s.isGlobal && s.status === 'confirmed' && s.date > new Date()
   ));
 
   careerHeadPastSessions = computed(() => this.allSessions().filter(s =>
-    s.isGlobal && s.date <= new Date()
+    s.isGlobal && (s.date <= new Date() || s.status === 'cancelled')
   ));
 
   newRequestSubjectId = signal('');
