@@ -23,15 +23,24 @@ export class SessionListComponent {
 
   activeMenuId = signal<string | null>(null);
 
+  // --- Confirmation Modal State ---
   showConfirmation = signal(false);
-  sessionToActOnId = signal<string | null>(null);
-  confirmationDetails = signal({ title: '', message: '' });
+  sessionToActOn = signal<TutoringSession | null>(null);
+  confirmationAction = signal<'reject' | 'cancel' | 'pay' | 'unpay' | null>(null);
+  confirmationDetails = signal({
+    title: '',
+    message: '',
+    icon: 'warning' as 'warning' | 'payment' | 'info',
+    iconBgColor: 'bg-red-100',
+    iconTextColor: 'text-red-600',
+    confirmButtonClass: 'bg-red-600 hover:bg-red-700',
+    confirmButtonText: 'Confirm'
+  });
 
   selectedSessionId = signal<string | null>(null);
   selectedSession = computed(() => {
     const id = this.selectedSessionId();
     if (!id) return null;
-    // The sessions() input will be updated reactively from the service
     return this.sessions().find(s => s.id === id) ?? null;
   });
 
@@ -72,38 +81,77 @@ export class SessionListComponent {
     this.closeMenu();
   }
 
-  initiateCancellation(sessionId: string, action: 'reject' | 'cancel') {
-    this.sessionToActOnId.set(sessionId);
-    if (action === 'reject') {
-      this.confirmationDetails.set({
-        title: 'Reject Session Request',
-        message: 'Are you sure you want to reject this tutoring session request? This action cannot be undone.'
-      });
-    } else {
-      this.confirmationDetails.set({
-        title: 'Cancel Session',
-        message: 'Are you sure you want to cancel this session? This action cannot be undone.'
-      });
+  initiateAction(session: TutoringSession, action: 'reject' | 'cancel' | 'pay' | 'unpay') {
+    this.sessionToActOn.set(session);
+    this.confirmationAction.set(action);
+
+    switch (action) {
+      case 'reject':
+        this.confirmationDetails.set({
+          title: 'Reject Session Request',
+          message: 'Are you sure you want to reject this request? This cannot be undone.',
+          icon: 'warning', iconBgColor: 'bg-red-100 dark:bg-red-900', iconTextColor: 'text-red-600 dark:text-red-400',
+          confirmButtonClass: 'bg-red-600 hover:bg-red-700', confirmButtonText: 'Reject'
+        });
+        break;
+      case 'cancel':
+        this.confirmationDetails.set({
+          title: 'Cancel Session',
+          message: 'Are you sure you want to cancel this session? This cannot be undone.',
+          icon: 'warning', iconBgColor: 'bg-red-100 dark:bg-red-900', iconTextColor: 'text-red-600 dark:text-red-400',
+          confirmButtonClass: 'bg-red-600 hover:bg-red-700', confirmButtonText: 'Cancel Session'
+        });
+        break;
+      case 'pay':
+        const paymentAmount = (session.durationMinutes / 60 * 170).toFixed(2);
+        this.confirmationDetails.set({
+          title: 'Confirm Payment',
+          message: `Mark this session as paid? Payment to tutor: Lps ${paymentAmount}.`,
+          icon: 'payment', iconBgColor: 'bg-green-100 dark:bg-green-900', iconTextColor: 'text-green-600 dark:text-green-400',
+          confirmButtonClass: 'bg-green-600 hover:bg-green-700', confirmButtonText: 'Mark as Paid'
+        });
+        break;
+      case 'unpay':
+        this.confirmationDetails.set({
+          title: 'Reverse Payment',
+          message: 'Are you sure you want to mark this session as unpaid?',
+          icon: 'warning', iconBgColor: 'bg-yellow-100 dark:bg-yellow-900', iconTextColor: 'text-yellow-600 dark:text-yellow-400',
+          confirmButtonClass: 'bg-yellow-500 hover:bg-yellow-600', confirmButtonText: 'Mark as Unpaid'
+        });
+        break;
     }
     this.showConfirmation.set(true);
     this.closeMenu();
   }
 
-  onConfirmCancellation() {
-    const id = this.sessionToActOnId();
-    if (id !== null) {
-      this.dataService.updateSessionStatus(id, 'cancelled');
+  onConfirmAction() {
+    const session = this.sessionToActOn();
+    const action = this.confirmationAction();
+    if (session && action) {
+      switch (action) {
+        case 'reject':
+        case 'cancel':
+          this.dataService.updateSessionStatus(session.id, 'cancelled');
+          break;
+        case 'pay':
+          this.dataService.updateSessionPaymentStatus(session.id, true);
+          break;
+        case 'unpay':
+          this.dataService.updateSessionPaymentStatus(session.id, false);
+          break;
+      }
     }
-    this.resetCancellationState();
+    this.resetConfirmationState();
   }
 
-  onCancelCancellation() {
-    this.resetCancellationState();
+  onCancelConfirmation() {
+    this.resetConfirmationState();
   }
 
-  private resetCancellationState() {
+  private resetConfirmationState() {
     this.showConfirmation.set(false);
-    this.sessionToActOnId.set(null);
+    this.sessionToActOn.set(null);
+    this.confirmationAction.set(null);
   }
 
   joinSession(sessionId: string) {

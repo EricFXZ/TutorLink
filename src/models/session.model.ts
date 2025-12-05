@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'tutor' | 'career_head';
+export type UserRole = 'student' | 'tutor' | 'career_head' | 'assistance';
 
 export interface User {
   id: string; // Firebase Auth UID
@@ -42,6 +42,7 @@ export interface TutoringSession {
   materials: { name: string; url: string }[];
   comments?: string;
   sessionLink?: string;
+  isPaid?: boolean;
   
   isGlobal?: boolean;
   attendeeIds?: string[];

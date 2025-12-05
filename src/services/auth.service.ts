@@ -93,6 +93,9 @@ export class AuthService {
           case 'career_head':
             this.router.navigate(['/career-head']);
             break;
+          case 'assistance':
+            this.router.navigate(['/assistance']);
+            break;
           default:
             this.router.navigate(['/student']);
         }

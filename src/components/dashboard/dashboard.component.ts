@@ -27,11 +27,13 @@ export class DashboardComponent {
   showRequestModal = signal(false);
   showSubjectManagerModal = signal(false);
   showGlobalSessionModal = signal(false);
+  showAddSubjectModal = signal(false);
 
   allSessions = this.dataService.getSessions();
   subjects = this.dataService.getSubjects();
   tutors = this.dataService.getTutors();
 
+  // --- Student Signals ---
   studentPendingSessions = computed(() => {
     const user = this.currentUserProfile();
     if (!user) return [];
@@ -72,6 +74,7 @@ export class DashboardComponent {
     );
   });
 
+  // --- Tutor Signals ---
   tutorPendingRequests = computed(() => {
     const user = this.currentUserProfile();
     if (!user) return [];
@@ -96,6 +99,7 @@ export class DashboardComponent {
     );
   });
 
+  // --- Career Head Signals ---
   careerHeadUpcomingSessions = computed(() => this.allSessions().filter(s =>
     s.isGlobal && s.status === 'confirmed' && s.date > new Date()
   ));
@@ -103,12 +107,39 @@ export class DashboardComponent {
   careerHeadPastSessions = computed(() => this.allSessions().filter(s =>
     s.isGlobal && (s.date <= new Date() || s.status === 'cancelled')
   ));
+  
+  // --- Assistance Signals ---
+  assistanceAllTutors = this.dataService.getTutors();
+  assistanceSelectedTutorId = signal<string | 'all'>('all');
+  
+  assistanceUpcomingSessions = computed(() => {
+    const selectedTutorId = this.assistanceSelectedTutorId();
+    return this.allSessions().filter(s =>
+      s.status !== 'completed' && 
+      s.status !== 'cancelled' && 
+      s.date > new Date() &&
+      (selectedTutorId === 'all' || s.tutorId === selectedTutorId)
+    ).sort((a, b) => a.date.getTime() - b.date.getTime());
+  });
 
+  assistancePastSessions = computed(() => {
+    const selectedTutorId = this.assistanceSelectedTutorId();
+    return this.allSessions().filter(s =>
+      (s.status === 'completed' || s.status === 'cancelled' || s.date <= new Date()) &&
+      (selectedTutorId === 'all' || s.tutorId === selectedTutorId)
+    ).sort((a, b) => b.date.getTime() - a.date.getTime());
+  });
+
+
+  // --- Modal Form Signals & Methods ---
+
+  // Request Modal
   newRequestSubjectId = signal('');
   newRequestTopic = signal('');
   newRequestTutorId = signal<string | null>(null);
   newRequestDate = signal('');
 
+  // Global Session Modal
   newGlobalSubjectId = signal('');
   newGlobalTopic = signal('');
   newGlobalTutorId = signal<string | null>(null);
@@ -116,6 +147,9 @@ export class DashboardComponent {
   newGlobalDuration = signal(90);
   newGlobalMaxAttendees = signal(20);
 
+  // Add Subject Modal
+  newSubjectName = signal('');
+  
   filteredTutorsForStudent = computed(() => {
     const selectedSubjectId = this.newRequestSubjectId();
     if (!selectedSubjectId) {
@@ -140,10 +174,7 @@ export class DashboardComponent {
     this.newGlobalTutorId.set(null);
   }
 
-  openRequestModal() {
-    this.showRequestModal.set(true);
-  }
-
+  openRequestModal() { this.showRequestModal.set(true); }
   closeRequestModal() {
     this.showRequestModal.set(false);
     this.newRequestSubjectId.set('');
@@ -152,18 +183,10 @@ export class DashboardComponent {
     this.newRequestDate.set('');
   }
 
-  openSubjectManagerModal() {
-    this.showSubjectManagerModal.set(true);
-  }
+  openSubjectManagerModal() { this.showSubjectManagerModal.set(true); }
+  closeSubjectManagerModal() { this.showSubjectManagerModal.set(false); }
 
-  closeSubjectManagerModal() {
-    this.showSubjectManagerModal.set(false);
-  }
-
-  openGlobalSessionModal() {
-    this.showGlobalSessionModal.set(true);
-  }
-
+  openGlobalSessionModal() { this.showGlobalSessionModal.set(true); }
   closeGlobalSessionModal() {
     this.showGlobalSessionModal.set(false);
     this.newGlobalSubjectId.set('');
@@ -172,6 +195,12 @@ export class DashboardComponent {
     this.newGlobalDate.set('');
     this.newGlobalDuration.set(90);
     this.newGlobalMaxAttendees.set(20);
+  }
+  
+  openAddSubjectModal() { this.showAddSubjectModal.set(true); }
+  closeAddSubjectModal() {
+    this.showAddSubjectModal.set(false);
+    this.newSubjectName.set('');
   }
 
   async submitRequest() {
@@ -197,7 +226,6 @@ export class DashboardComponent {
       this.closeRequestModal();
     } catch (error) {
       console.error("Failed to create request:", error);
-      // Optionally show an error to the user
     }
   }
   
@@ -226,6 +254,18 @@ export class DashboardComponent {
       this.closeGlobalSessionModal();
     } catch (error) {
       console.error("Failed to create global session:", error);
+    }
+  }
+  
+  async submitNewSubject() {
+    const subjectName = this.newSubjectName();
+    if (!subjectName.trim()) return;
+
+    try {
+      await this.dataService.createSubject(subjectName);
+      this.closeAddSubjectModal();
+    } catch (error) {
+      console.error("Failed to create subject:", error);
     }
   }
 }

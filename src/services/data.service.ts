@@ -112,6 +112,11 @@ export class DataService {
     const sessionRef = doc(this.db, 'sessions', sessionId);
     await updateDoc(sessionRef, { status });
   }
+  
+  async updateSessionPaymentStatus(sessionId: string, isPaid: boolean) {
+    const sessionRef = doc(this.db, 'sessions', sessionId);
+    await updateDoc(sessionRef, { isPaid });
+  }
 
   async updateSessionDetails(sessionId: string, details: Partial<Pick<TutoringSession, 'sessionLink' | 'comments' | 'materials'>>) {
     const sessionRef = doc(this.db, 'sessions', sessionId);
@@ -143,6 +148,7 @@ export class DataService {
       ...sessionData,
       date: Timestamp.fromDate(sessionData.date!),
       status: 'pending' as SessionStatus,
+      isPaid: false,
       tutorName: tutor.name, // denormalized
       subjectName: subject.name, // denormalized
       studentName: student.name, // denormalized
@@ -162,11 +168,19 @@ export class DataService {
       ...sessionData,
       date: Timestamp.fromDate(sessionData.date!),
       status: 'confirmed' as SessionStatus,
+      isPaid: false,
       attendeeIds: [],
       tutorName: tutor.name, // denormalized
       subjectName: subject.name, // denormalized
     };
     await addDoc(collection(this.db, 'sessions'), sessionDoc);
+  }
+  
+  async createSubject(subjectName: string) {
+    if (!subjectName.trim()) {
+        throw new Error("Subject name cannot be empty.");
+    }
+    await addDoc(collection(this.db, 'subjects'), { name: subjectName });
   }
 
   private async getUserById(userId: string): Promise<User | undefined> {

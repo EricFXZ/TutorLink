@@ -1,20 +1,25 @@
 <div class="space-y-8">
   <!-- Role Switcher for Mockup -->
-  <div class="flex justify-center p-1 bg-gray-200 dark:bg-gray-700 rounded-lg shadow-inner max-w-md mx-auto">
+  <div class="flex justify-center p-1 bg-gray-200 dark:bg-gray-700 rounded-lg shadow-inner max-w-2xl mx-auto">
     <a [routerLink]="['/student']"
         [class]="currentUserRole() === 'student' ? 'bg-blue-600 text-white shadow' : 'bg-transparent text-gray-600 dark:text-gray-300'"
-        class="w-1/3 px-4 py-2 rounded-md font-semibold transition-colors duration-300 ease-in-out text-center">
+        class="w-1/4 px-4 py-2 rounded-md font-semibold transition-colors duration-300 ease-in-out text-center">
       Student
     </a>
     <a [routerLink]="['/tutor']"
         [class]="currentUserRole() === 'tutor' ? 'bg-blue-600 text-white shadow' : 'bg-transparent text-gray-600 dark:text-gray-300'"
-        class="w-1/3 px-4 py-2 rounded-md font-semibold transition-colors duration-300 ease-in-out text-center">
+        class="w-1/4 px-4 py-2 rounded-md font-semibold transition-colors duration-300 ease-in-out text-center">
       Tutor
     </a>
     <a [routerLink]="['/career-head']"
         [class]="currentUserRole() === 'career_head' ? 'bg-blue-600 text-white shadow' : 'bg-transparent text-gray-600 dark:text-gray-300'"
-        class="w-1/3 px-4 py-2 rounded-md font-semibold transition-colors duration-300 ease-in-out text-center">
+        class="w-1/4 px-4 py-2 rounded-md font-semibold transition-colors duration-300 ease-in-out text-center">
       Career Head
+    </a>
+    <a [routerLink]="['/assistance']"
+        [class]="currentUserRole() === 'assistance' ? 'bg-blue-600 text-white shadow' : 'bg-transparent text-gray-600 dark:text-gray-300'"
+        class="w-1/4 px-4 py-2 rounded-md font-semibold transition-colors duration-300 ease-in-out text-center">
+      Assistance
     </a>
   </div>
 
@@ -85,6 +90,55 @@
         <app-session-list title="Upcoming Global Sessions" [sessions]="careerHeadUpcomingSessions()" [userRole]="'career_head'"></app-session-list>
         <hr>
         <app-session-list title="Past Global Sessions" [sessions]="careerHeadPastSessions()" [userRole]="'career_head'"></app-session-list>
+      </div>
+    </div>
+  }
+  
+  <!-- Assistance View -->
+  @if (currentUserRole() === 'assistance') {
+    <div class="animate-fade-in">
+       <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Assistance Dashboard</h2>
+        <button (click)="openAddSubjectModal()" class="flex items-center bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+          </svg>
+          Add New Subject
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <div class="xl:col-span-2 space-y-8">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center gap-4">
+              <label for="tutor-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Tutor:</label>
+              <select id="tutor-filter" name="tutor-filter" [(ngModel)]="assistanceSelectedTutorId" class="block w-full max-w-xs pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                <option value="all">All Tutors</option>
+                @for (tutor of assistanceAllTutors(); track tutor.id) {
+                  <option [value]="tutor.id">{{ tutor.name }}</option>
+                }
+              </select>
+            </div>
+            <app-session-list title="Upcoming Sessions" [sessions]="assistanceUpcomingSessions()" [userRole]="'assistance'"></app-session-list>
+            <hr>
+            <app-session-list title="Past Sessions" [sessions]="assistancePastSessions()" [userRole]="'assistance'"></app-session-list>
+        </div>
+        <div class="space-y-8">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">All Tutors</h3>
+                @if (assistanceAllTutors().length > 0) {
+                    <ul class="space-y-3 max-h-96 overflow-y-auto">
+                        @for (tutor of assistanceAllTutors(); track tutor.id) {
+                            <li class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                <p class="font-semibold text-gray-800 dark:text-gray-200">{{ tutor.name }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ tutor.email }}</p>
+                            </li>
+                        }
+                    </ul>
+                } @else {
+                    <p class="text-sm text-gray-500 dark:text-gray-400">No tutors found.</p>
+                }
+            </div>
+        </div>
       </div>
     </div>
   }
@@ -200,6 +254,31 @@
     </div>
   </div>
 }
+
+<!-- Add Subject Modal -->
+@if (showAddSubjectModal()) {
+  <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in-fast p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-6 sm:p-8 w-full max-w-md">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold">Add New Subject</h3>
+        <button (click)="closeAddSubjectModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <form (ngSubmit)="submitNewSubject()" class="space-y-4">
+        <div>
+          <label for="subject-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Subject Name</label>
+          <input type="text" id="subject-name" name="subject-name" [(ngModel)]="newSubjectName" required placeholder="e.g., 'Linear Algebra'" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div class="pt-4 flex justify-end space-x-3">
+          <button type="button" (click)="closeAddSubjectModal()" class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
+          <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg">Add Subject</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
 
 <!-- Manage Subjects Modal -->
 @if (showSubjectManagerModal()) {

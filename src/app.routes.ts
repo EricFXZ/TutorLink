@@ -8,6 +8,7 @@ export const routes: Routes = [
     { path: 'student', component: DashboardComponent, canActivate: [authGuard] },
     { path: 'tutor', component: DashboardComponent, canActivate: [authGuard] },
     { path: 'career-head', component: DashboardComponent, canActivate: [authGuard] },
+    { path: 'assistance', component: DashboardComponent, canActivate: [authGuard] },
     { path: '', redirectTo: '/login', pathMatch: 'full' },
     { path: '**', redirectTo: '/login' }
 ];
