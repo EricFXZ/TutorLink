@@ -1,28 +1,4 @@
 <div class="space-y-8">
-  <!-- Role Switcher for Mockup -->
-  <div class="flex justify-center p-1 bg-gray-200 dark:bg-gray-700 rounded-lg shadow-inner max-w-2xl mx-auto">
-    <a [routerLink]="['/student']"
-        [class]="currentUserRole() === 'student' ? 'bg-blue-600 text-white shadow' : 'bg-transparent text-gray-600 dark:text-gray-300'"
-        class="w-1/4 px-4 py-2 rounded-md font-semibold transition-colors duration-300 ease-in-out text-center">
-      Student
-    </a>
-    <a [routerLink]="['/tutor']"
-        [class]="currentUserRole() === 'tutor' ? 'bg-blue-600 text-white shadow' : 'bg-transparent text-gray-600 dark:text-gray-300'"
-        class="w-1/4 px-4 py-2 rounded-md font-semibold transition-colors duration-300 ease-in-out text-center">
-      Tutor
-    </a>
-    <a [routerLink]="['/career-head']"
-        [class]="currentUserRole() === 'career_head' ? 'bg-blue-600 text-white shadow' : 'bg-transparent text-gray-600 dark:text-gray-300'"
-        class="w-1/4 px-4 py-2 rounded-md font-semibold transition-colors duration-300 ease-in-out text-center">
-      Career Head
-    </a>
-    <a [routerLink]="['/assistance']"
-        [class]="currentUserRole() === 'assistance' ? 'bg-blue-600 text-white shadow' : 'bg-transparent text-gray-600 dark:text-gray-300'"
-        class="w-1/4 px-4 py-2 rounded-md font-semibold transition-colors duration-300 ease-in-out text-center">
-      Assistance
-    </a>
-  </div>
-
   <!-- Student View -->
   @if (currentUserRole() === 'student') {
     <div class="animate-fade-in">

@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { DataService } from '../../services/data.service';
 
 @Component({
   selector: 'app-login',
@@ -15,11 +14,9 @@ import { DataService } from '../../services/data.service';
 export class LoginComponent {
   private router = inject(Router);
   private authService = inject(AuthService);
-  private dataService = inject(DataService);
 
   isLoginView = signal(true);
   errorMessage = signal<string | null>(null);
-  isSeeding = signal(false);
 
   // Login form model
   loginCredentials = {
@@ -87,19 +84,5 @@ export class LoginComponent {
   toggleView() {
     this.isLoginView.update(value => !value);
     this.errorMessage.set(null);
-  }
-
-  async seedDatabase() {
-    this.isSeeding.set(true);
-    this.errorMessage.set(null);
-    try {
-        await this.dataService.seedDatabase();
-        alert('Database seeded successfully with sample subjects and tutors!');
-    } catch (e) {
-        console.error('Seeding failed', e);
-        this.errorMessage.set('Failed to seed database. Check console for details.');
-    } finally {
-        this.isSeeding.set(false);
-    }
   }
 }
